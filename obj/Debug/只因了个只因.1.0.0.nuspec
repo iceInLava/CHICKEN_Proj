@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>只因了个只因</id>
+    <version>1.0.0</version>
+    <authors>只因了个只因</authors>
+    <description>Package Description</description>
+    <dependencies>
+      <group targetFramework="net6.0-windows7.0" />
+    </dependencies>
+    <frameworkReferences>
+      <group targetFramework="net6.0-windows7.0">
+        <frameworkReference name="Microsoft.WindowsDesktop.App.WindowsForms" />
+      </group>
+    </frameworkReferences>
+  </metadata>
+  <files>
+    <file src="D:\代码\C#Studying\CS课堂学习\只因了个只因\bin\Debug\net6.0-windows\只因了个只因.runtimeconfig.json" target="lib\net6.0-windows7.0\只因了个只因.runtimeconfig.json" />
+    <file src="D:\代码\C#Studying\CS课堂学习\只因了个只因\bin\Debug\net6.0-windows\只因了个只因.dll" target="lib\net6.0-windows7.0\只因了个只因.dll" />
+  </files>
+</package>

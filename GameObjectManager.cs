@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -11,14 +12,6 @@ namespace 只因了个只因
 {
     internal class GameObjectManager
     {
-        /// <summary>
-        /// (已弃用)网格，本质为三维数组，xy表示数组的长宽，z表示数组的层数。
-        /// 本数组用于作为一个网格，固定button的生成位置
-        /// z默认为3
-        /// </summary>
-        public int[,,] threeDGrid;
-
-
         public int grid_x_count;
         public int grid_y_count;
         public int grid_z_count = 3;
@@ -45,41 +38,19 @@ namespace 只因了个只因
             button_list_1 = new List<MyButton>();
             button_list_2 = new List<MyButton>();
             button_list_3 = new List<MyButton>();
-            button_count = 54;
-            grid_x_count = 7;
-            grid_y_count = 7;
+            button_count = 108;
+            grid_x_count = 9;
+            grid_y_count = 9;
             grid_z_count = 3;
             //threeDGrid = new int[6, 6, 3];
 
             button_list_clicked = new List<MyButton>();
         }
-
         /// <summary>
-        /// （已弃用）初始化网格
+        /// 初始化buttons
+        /// 思路为:将buttons分别放在3个List中，表示上中下三层的层级关系
+        /// 随机将button初始化为六种button，分别装在三个链表中
         /// </summary>
-        public void Init_grid()
-        {
-            Random random = new Random();
-            for (int i = 0; i < grid_z_count; i++)
-            {
-                HashSet<int> selectedIndexes = new HashSet<int>();
-                for (int j = 0; j < button_count / 3;)
-                {
-                    int index = random.Next(0, grid_x_count * grid_y_count);
-                    if (selectedIndexes.Contains(index) == false)
-                    {
-                        selectedIndexes.Add(index);
-                        int row = index / grid_x_count;
-                        int column = index % grid_y_count;
-
-                        threeDGrid[row, column, 0] = 1;
-
-                        j++;
-                    }
-                }
-            }
-        }
-
         public void Init_buttons()
         {
             Random random = new Random();
@@ -91,6 +62,8 @@ namespace 只因了个只因
                 {
                     check_btn_type[type]++;
                     MyButton btn = new MyButton(50, 50, type);
+                    btn.BackgroundImage = Image.FromFile(btn.URL);
+                    btn.BackgroundImageLayout = ImageLayout.Zoom;
                     btn.btn_index = i;
                     if(i < button_count/3)
                     {
@@ -111,41 +84,45 @@ namespace 只因了个只因
                 }
             }
         }
-        public void ShowButtons(GameObjectManager game)
+        /// <summary>
+        /// 显示buttons（调用Put_button()）
+        /// </summary>
+        /// <param name="game">当前游戏的GameManager</param>
+        public void Show_buttons(GameObjectManager game)
         {
-            MyButton current_btn;
-            for (int i = 0; i < game.grid_z_count; i++)
+            Put_button(game, button_list_1, 1);
+            Put_button(game, button_list_2, 2);
+            Put_button(game, button_list_3, 3);
+        }
+        /// <summary>
+        /// 在窗体内生成某一层的button
+        /// </summary>
+        /// <param name="game">当前游戏的GameManager</param>
+        /// <param name="button_list">某一层的buttonList</param>
+        /// <param name="layer">第几层</param>
+        protected void Put_button(GameObjectManager game, List<MyButton> button_list, int layer)
+        {
+            Random random = new Random();
+            HashSet<int> selectedIndexs = new HashSet<int>();
+
+            foreach (var btn in button_list)
             {
-                Random random = new Random();
-                HashSet<int> selectedIndexs = new HashSet<int>();
-                for (int j = i * button_count / 3; j < (i + 1) * button_count / 3;)
+                int index = random.Next(0, game.grid_x_count * game.grid_y_count);
+                if (selectedIndexs.Contains(index) == false)
                 {
-                    int index = random.Next(0, game.grid_x_count * game.grid_y_count);
-                    if (selectedIndexs.Contains(index) == false)
-                    {
-                        if (j < button_count / 3)
-                            current_btn = button_list_1[j];
-                        else if (j < button_count * 2 / 3)
-                            current_btn = button_list_2[j-button_count/3];
-                        else
-                            current_btn= button_list_3[j-(button_count*2/3)];
-
-                        current_btn.grid_x_btn = index / game.grid_x_count;
-                        current_btn.grid_y_btn = index % game.grid_y_count;
-                        current_btn.grid_z_btn = i;
-
-                        current_btn.Location = new Point(current_btn.grid_x_btn * 70+ i * 15,
-                            current_btn.grid_y_btn * 70 + i * 15);
-                        current_btn.BackgroundImage = Image.FromFile(current_btn.URL);
-                        current_btn.BackgroundImageLayout = ImageLayout.Zoom;
-
-                        Form.ActiveForm.Controls.Add(current_btn);
-                        j++; 
-                    }
+                    btn.grid_x_btn = index / game.grid_x_count;
+                    btn.grid_y_btn = index % game.grid_y_count;
+                    btn.grid_z_btn = layer;
+                    btn.Location = new Point(btn.grid_x_btn * 65 + btn.grid_z_btn*10,
+                        btn.grid_y_btn * 65 + btn.grid_z_btn*10);
+                    Form.ActiveForm.Controls.Add(btn);
                 }
             }
+            selectedIndexs.Clear();
         }
-
+        /// <summary>
+        /// 判断button是否Enabled
+        /// </summary>
         public static void Active_btn()
         {
             foreach(var middle in button_list_2)
@@ -158,7 +135,14 @@ namespace 只因了个只因
                     || IsButtonCovered(lower, button_list_1));
             }
         }
-        public static bool IsButtonCovered(MyButton lowerBtn, List<MyButton> btn_list)
+        /// <summary>
+        /// （被Active_btn()调用）遍历下层button
+        /// 列表，判断button是否被其他button覆盖
+        /// </summary>
+        /// <param name="lowerBtn"></param>
+        /// <param name="btn_list"></param>
+        /// <returns>被盖住：true，没盖住：false </returns>
+        protected static bool IsButtonCovered(MyButton lowerBtn, List<MyButton> btn_list)
         {
             if (btn_list.Count == 0)
                 return false;
@@ -173,6 +157,10 @@ namespace 只因了个只因
             }
             return false;
         }
+        /// <summary>
+        /// 点击
+        /// </summary>
+        /// <param name="key"></param>
         public static void Click_btn_to_result(int key)
         {
             MyButton newButton = new MyButton();
@@ -220,18 +208,15 @@ namespace 只因了个只因
             }
             form.Refresh();
         }
-        public static bool Is_result_full()
-        {
-            return false;
-        }
-
+        /// <summary>
+        /// 判断是否三消，如果暂存button的栏满了会弹窗：“你失败了！爬！”
+        /// </summary>
         public static void Check_clean_or_lose()
         {
             string clean_name = null;
             if(button_list_clicked.Count > 6)
             {
-                MessageBox.Show("傻逼");
-                
+                MessageBox.Show("你失败了！爬！");
             }
             Dictionary<string, int> dict_tag_frequency = new Dictionary<string, int>
             {
@@ -279,7 +264,6 @@ namespace 只因了个只因
                     break;
                 }
             }
-            
         }
     }
 }

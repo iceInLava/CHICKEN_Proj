@@ -33,8 +33,6 @@ namespace 只因了个只因
         /// </summary>
         public int btn_index;
 
-        public int btn_weight;
-
         public int grid_x_btn;
         public int grid_y_btn;
         public int grid_z_btn;
@@ -57,6 +55,12 @@ namespace 只因了个只因
             URL = "images/" + tag + ".png";
             this.Click += Button_click;
         }
+
+       /// <summary>
+       /// 芝士雪豹
+       /// </summary>
+       /// <param name="sender"></param>
+       /// <param name="e"></param>
         public void Button_click(object sender, EventArgs e)
         {
             //MessageBox.Show("clicked!" + tag);
